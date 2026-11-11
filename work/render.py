@@ -115,7 +115,7 @@ PALS = [(.95, .75, .35), (.55, .8, .6), (.9, .55, .65), (.6, .65, .9), (.8, .6, 
 DEF = dict(stage=0, sets=1, ro=V(0, 1, -5), ta=V(0, 1, 0), fov=40., roll=0., focus=None, ap=0., tilt=0., tiltc=.5,
            drops=0., lsnow=0., desat=0., eblur=0., pulse=0., radial=0., film=0., vig=0., expo=1., sat=1., warm=0., lift=0., flash=0.,
            fogD=.012, fogH=.35, starA=0., domeA=.5, clY=6., clA=0., rainA=0., snowA=0., wet=0., snowL=8.5, mistA=0., amb=.6,
-           orb=.6, winA=0., strm=0., ntBlur=0., tmaxS=45.,
+           orb=.6, winA=0., strm=0., ntBlur=0., tmaxS=45., clCov=0.,
            ltn=(0, 0, 0, 0), glow=(0, 0, 0, 99), lone=(0, 1, 0, 0), pl0=(0, 0, 0, 1), pl0c=(0, 0, 0, 0), sp0=(0, 0, 0, 1), sp0d=(0, -1, 0, .01),
            sp0c=(0, 0, 0, 0), setA=(0, 0, 0, 0), setB=(0, 0, 0, 0), rkO=(0, 0, 0, 0), stO=(-10., 3.0, 10.), part=(0, 0, 0, 0), partC=(1, .8, .4, 0))
 PRE = dict(
@@ -129,8 +129,10 @@ PRE = dict(
            fogC=V(.62, .66, .73), fogD=.09, fogH=.001, snowA=1., snowL=-2., domeA=1., amb=.8, orb=.3),
  dusk=dict(sunD=N((-.9, .1, -.2)), sunC=V(1., .5, .25) * 1.0, skT=V(.06, .08, .22), skM=V(.35, .22, .36), skH=V(.95, .5, .3),
            fogC=V(.5, .34, .38), fogD=.014, clY=9.5, clA=.9, domeA=.5, amb=1.5, winA=1., orb=1.3),
- rain=dict(sunD=N((.2, .75, -.3)), sunC=V(.3, .38, .55) * 1.3, skT=V(.012, .018, .035), skM=V(.035, .05, .085), skH=V(.08, .1, .15),
-           fogC=V(.07, .09, .13), fogD=.028, fogH=.2, domeA=1., rainA=1., wet=1., winA=1., orb=1.6, amb=2.2, clY=7., clA=1.),
+ rain=dict(sunD=N((.75, .5, -.45)), sunC=V(.3, .46, .95) * 1.9, skT=V(.01, .02, .05), skM=V(.03, .055, .12), skH=V(.07, .11, .2),
+           fogC=V(.05, .085, .16), fogD=.024, fogH=.2, domeA=1., rainA=1., wet=1., winA=1.3, orb=1.8, amb=1.9, clY=7., clA=1.),
+ above=dict(sunD=N((.7, .32, -.55)), sunC=V(1., .8, .55) * 1.8, skT=V(.1, .26, .62), skM=V(.46, .64, .88), skH=V(1., .86, .7),
+            fogC=V(.95, .88, .82), fogD=.004, fogH=.05, domeA=.15, clA=1., amb=1.1, orb=.3),
  night=dict(sunD=N((-.45, .6, -.5)), sunC=V(.38, .48, .8) * 1.5, skT=V(.0, .008, .03), skM=V(.015, .035, .11), skH=V(.07, .12, .26),
             fogC=V(.05, .08, .17), fogD=.012, starA=1., domeA=.15, winA=1., orb=1.6, amb=2.),
  predawn=dict(sunD=N((1., .03, .1)), sunC=V(1., .5, .25) * .6, skT=V(.01, .03, .12), skM=V(.1, .14, .32), skH=V(.75, .4, .3),
@@ -179,10 +181,11 @@ def pov(s, eye, yaw, pitch, T, amp=1., chaos=0., fov=62.):
     pitch += -.015 * amp * bob + chaos * .04 * math.sin(T * 9.1 + 1)
     cam(s, e, e + dirYP(yaw, pitch), fov, .02 * amp * sw + chaos * .04 * math.sin(T * 5.7))
     s['pulse'] = .008 * math.sin(T * 1.6); s['focus'] = 3.
-def hands(s, col=ORANGE, y=-.042, spread=.04, z=.085, sc=.015, lift=(0., 0.)):
+def hands(s, col=ORANGE, y=-.03, spread=.042, z=.092, sc=.017, lift=(0., 0.), fwd=(0., 0.)):
+    # two round hands with forearms reaching in from the bottom corners of the frame
     uu, vv, ww, fl = basis(s)
     for i, sx in enumerate((-1, 1)):
-        s['items'].append(it(C2W(s, (sx * spread, y + lift[i], z)), ww, 0., sc, col, 10))
+        s['items'].append(it(C2W(s, (sx * spread, y + lift[i], z + fwd[i])), N(ww + vv * .25 - uu * sx * .3), -sx * .5, sc, col, 12))
 def walk_ph(T, rate=1.): return pi * beat(T) * rate
 def walker(z, T, **kw):
     return ch(PP(z), yaw=yawP(z), ph=walk_ph(T), **kw)
@@ -237,8 +240,16 @@ def sZig(t, d, T, v):
     s0 = sAt(11.6); z = zAt(s0 + .2 * t * (.6 if v == 1 else 1.))
     C = PP(z) * V(.6, 1, 1)
     hgt = (3.6, 3.6, 7.)[v]
-    cam(s, C + V(.5 + .1 * t, hgt, -hgt * .5 + .05 * t), C + V(0, 0, .2), 30., .05 * math.sin(t * .3))
-    s['focus'] = hgt * 1.1; s['tilt'] = .035; s['tiltc'] = .5; s['clA'] = 0.; s['fogD'] *= .6
+    if v == 0:
+        cam(s, C + V(.5 + .1 * t, hgt, -hgt * .5 + .05 * t), C + V(0, 0, .2), 30., .05 * math.sin(t * .3))
+        s['focus'] = hgt * 1.1; s['tilt'] = .035; s['tiltc'] = .5
+    elif v == 1:    # low, in front of the climber: rain streaming down the path, campus lights far below
+        Pc = PP(z); ro = PP(z + .75, .07) + V(.16, 0, 0)
+        cam(s, ro, Pc + V(0, .09, 0), 38., .03 * math.sin(t * .8)); s['focus'] = .75; s['ap'] = .014
+        s['pl0'] = tuple(ro + V(-.25, .3, .1)) + (3.,); s['pl0c'] = (.5, .62, 1., 1.)
+    else:           # wide oblique aerial drifting back while the bends light up one by one
+        cam(s, C + V(2.6 + .12 * t, 3.2 + .3 * t, -4.2 - .45 * t), C + V(-.3, 0, 1.6), 34.); s['focus'] = 6.; s['tilt'] = .03; s['tiltc'] = .5
+    s['clA'] = 0.; s['fogD'] *= .6
     c = walker(z, T, sc=.16, lean=.3 if v == 1 else 0., med=1. if v == 1 else 0., hat=1 if v == 2 else 0)
     if v == 1: c['ph'] = walk_ph(T, .5)
     s['chars'].append(c)
@@ -249,7 +260,7 @@ def sZig(t, d, T, v):
 
 def sFog(t, d, T, v):
     s = base(('dawn', 'rain', 'sunset')[v])
-    z = 14.05 + .11 * t * (1., .7, .8)[v]
+    z = (14.05, 16.6, 12.4)[v] + .11 * t * (1., .7, .8)[v]
     eye = PP(z, .078); nx = PP(z + .6, .11); dd = nx - eye; yaw = math.atan2(dd[0], dd[2]); u = cl(t / d)
     if v == 0:
         pov(s, eye, yaw, .1 + .1 * u, T, 1., .25 + .9 * u)
@@ -262,9 +273,15 @@ def sFog(t, d, T, v):
     else:
         pov(s, eye, yaw, .12, T, .35, 0.)
         s['mistA'] = .65; s['fogD'] = .07; s['fogC'] = V(1., .7, .4); s['clA'] = 0.
-    hands(s)
-    uu, vv, ww, fl = basis(s)
-    s['items'].append(it(C2W(s, (0., -.03, .088)), N(ww * .7 + vv * .45 + uu * .25), .15, .036, (1, 1, 1) if v != 1 else (.6, .64, .72), 0))
+    uu, vv, ww, fl = basis(s); sw = math.sin(pi * beat(T))
+    if v == 0:      # holding the brand-new paper plane in both hands
+        hands(s, lift=(.002 * sw, -.002 * sw))
+        s['items'].append(it(C2W(s, (0., -.022 + .0015 * sw, .1)), N(ww + vv * .42 + uu * .12), .06 * sw, .05, (1, 1, 1), 0))
+    elif v == 1:    # the plane is gone: empty hands pumping through the rain
+        hands(s, y=-.034, spread=.05, lift=(.007 * sw, -.007 * sw), fwd=(.012 * sw, -.012 * sw))
+    else:           # refolded plane, carried easily in one hand
+        hands(s, y=-.033, spread=.05, lift=(-.004, .008), fwd=(0., .006))
+        s['items'].append(it(C2W(s, (.047, -.014, .103)), N(ww + vv * .35 - uu * .25), -.25, .042, (1., .97, .9), 0))
     return s
 
 def sPeak(t, d, T, v):
@@ -278,9 +295,13 @@ def sPeak(t, d, T, v):
         cam(s, top + V(.38 - .12 * u, .09 + .02 * u, -.6 - .08 * u), top + V(0, .08, 0), 42.)
         s['focus'] = .6; s['ap'] = .012; s['clA'] = .3
         return s
-    k = ease(u) ** 1.6 * (1. if v == 0 else .75)
-    ro = top + mix(V(.3, .1, -.55), V(4.5, 3.4, -13.), k); ta = top + mix(V(0, .07, 0), V(-2.6, 3.6, 8.), k)
-    cam(s, ro, ta, 40.); s['focus'] = np.linalg.norm(ro - top); s['ap'] = .012 * (1 - k)
+    if v == 0:      # jump for joy, then the camera swings out sideways: the "summit" is a bump on the shoulder of the range
+        k = ease(u) ** 1.6
+        ro = top + mix(V(.3, .1, -.55), V(-9.5, 2.6, -6.), k); ta = top + mix(V(0, .07, 0), V(2.5, 3.2, 7.), k)
+        cam(s, ro, ta, 40.); s['focus'] = np.linalg.norm(ro - top); s['ap'] = .012 * (1 - k)
+    else:           # no cheering: from below, the real mountain looms over the little peak in the lightning
+        ro = G(top[0] - .22, top[2] - .62 + .1 * u, .035); cam(s, ro, top + V(.15, .22 + .12 * u, .6), 46.)
+        s['focus'] = .66; s['ap'] = .006; s['amb'] = 2.6
     if v == 0:
         s['chars'].append(ch(top + V(0, .03 * abs(math.sin(pi * x)), 0), yaw=pi - .5, arm=1., ph=0.))
         s['items'].append(backplane(s['chars'][0]))
@@ -333,21 +354,32 @@ def stair(sv):
     idx = k * 30 + (15 if seg % 2 else 0) + (f - .3) / .12
     O = V(*DEF['stO'])
     return O + V(l[2], l[1], l[0]), yaw, idx
+def stair_dy(sv):
+    f = sv % 2.4; i = math.floor((f - .3) / .12)
+    return .064 * cl(i + 1., 0., 15.) - .96 * cl((f - .3) / 1.8)
 def sStairs(t, d, T, v):
     s = base(('dawn', 'rain')[v]); s['sets'] = 2; s['clY'] = 4.2; s['clA'] = 1.; u = cl(t / d)
     if v == 0:
-        sv = .5 + mix(0., 2.05, sm(-.1, .74, u) * .5 + .5 * cl(u / .74))
-        p, yaw, idx = stair(sv)
-        pitch = mix(-.75, .1, sm(.0, .22, u)) + .16 * sm(.7, .95, u)
-        pov(s, p + V(0, .1, 0), yaw, pitch, T, 1.2, .1, 60.)
-        s['fogD'] = .03; s['fogH'] = .12; s['fogC'] = V(.95, .75, .62); s['setA'] = (0, 0, 0, 1.); s['expo'] = 1.5
-        s['pl0'] = tuple(p + V(0, .25, 0)) + (6.,); s['pl0c'] = (.9, .6, .4, 1.)
+        # climbing a stone stair in the sky; after the corner the camera lifts and the ranges stack up ahead
+        sv = .6 + 4.3 * u
+        p, yaw, idx = stair(sv); p = p + V(0, stair_dy(sv), 0)
+        s['chars'].append(ch(p, yaw=yaw, ph=walk_ph(T), lean=.18, sc=.11)); s['items'].append(backplane(s['chars'][0]))
+        k = sm(.5, .95, u)
+        ro = p + mix(V(-.62, .34, -.5), V(-1.5, 1.25, -1.9), k)
+        ta = mix(p + V(.12, .1, .12), V(1., 9.5, 38.), k * .8)
+        cam(s, ro, ta, mix(40., 34., k)); s['focus'] = mix(.8, 30., k); s['ap'] = .012 * (1 - k)
+        s['fogD'] = .02; s['fogH'] = .2; s['clCov'] = .5
     else:
-        sv = .5 + 4.6 * u
-        p, yaw, idx = stair(sv)
-        pov(s, p + V(0, .1, 0), yaw, .1 + .12 * math.sin(T * 1.7), T, 1.6, .6, 60.)
-        s['setA'] = (0, 0, idx + 3.5, 0); s['drops'] = .8; s['vig'] = .5; s['desat'] = .2; s['fogD'] = .06; s['fogH'] = .05
-        s['pl0'] = tuple(p + V(0, .12, 0)) + (30.,); s['pl0c'] = (.6, .42, .2, 1.)
+        # the same stair at night, seen from above: the lamps come on step by step behind the climber
+        sv = .6 + 4.6 * u
+        p, yaw, idx = stair(sv); p = p + V(0, stair_dy(sv), 0)
+        s['chars'].append(ch(p, yaw=yaw, ph=walk_ph(T, .5), lean=.4, med=1., sc=.11))
+        f = dirYP(yaw, 0.); a = V(1., 0, 1.) / math.sqrt(2.)
+        ro = p + a * .75 + V(.3, .95, -.3) + V(0, .06 * math.sin(T * .7), 0)
+        cam(s, ro, p + V(0, .1, 0) - a * .5, 40., .04 * math.sin(T * .5)); s['focus'] = float(np.linalg.norm(ro - p)); s['ap'] = .012
+        s['setA'] = (0, 0, idx + 1.5, 0); s['fogD'] = .05; s['fogH'] = .05; s['vig'] = .4
+        s['pl0'] = tuple(p + V(0, .14, 0)) + (25.,); s['pl0c'] = (.7, .48, .22, 1.)
+        lightning(s, T, [105.9, 108.6], 21.)
     return s
 
 def CLIFF(): return PP(20.6)
@@ -399,7 +431,7 @@ def sB2b(t, d, T):
         s['notes'].append(note(C2W(s, (0., -.012 + .004 * b, .1)), N(-ww + vv * .35), vv, .046, .023, front=0, bend=.18 * (1 - b * .6)))
         s['ntBlur'] = 2.3
     cup = .012 * sm(.5, .9, t)
-    hands(s, y=-.04 + cup, spread=.047, z=.095)
+    hands(s, y=-.034 + cup, spread=.047, z=.095)
     return s
 
 def book_pos(L):
@@ -411,7 +443,9 @@ def sB3(t, d, T):
     s = base('desknight'); k = int(cl(t / 1.93, 0, 3.99)); fr = t / 1.93 - k
     kk = k + sm(.0, .35, fr) - 1. if k > 0 else 0.
     kk = max(kk, 0.) if k == 0 else (k - 1) + sm(0., .3, fr)
-    cam(s, V(1.02, .2 + .13 * kk, 1.22), V(0, .17 + .13 * kk, 0), 36.); s['ap'] = .02; s['focus'] = 1.55
+    ro, ta = [(V(1.02, .2, 1.22), V(.1, .17, .1)), (V(.25, .42, 1.62), V(0, .3, 0)), (V(-1.0, .62, 1.05), V(0, .42, 0)), (V(.25, 1.75, 1.45), V(0, .62, 0))][k]
+    ro = ro + N(ta - ro) * .1 * fr
+    cam(s, ro, ta, 36.); s['ap'] = .02; s['focus'] = float(np.linalg.norm(ro - ta))
     nb = 7. + 3. * sm(3.86, 5.3, t)
     s['setA'] = (nb, 1, 0, 0)
     lamp = 1. + 2.6 * sm(1.93, 2.6, t)
@@ -465,7 +499,8 @@ def sB6b(t, d, T):
     return s
 RK = V(40., 22., 40.)
 def sB7(t, d, T):
-    s = base('mist'); s['sets'] = 4; s['fogD'] = .05; s['clY'] = 21.5; s['clA'] = 1.; u = cl(t / d)
+    s = base('above'); s['sets'] = 4; s['clY'] = 21.5; s['clCov'] = 1.; u = cl(t / d)
+    blend(s, 'mist', .35 * u); s['fogD'] = .004 + .03 * u
     st = beat(T) - beat(65.48) + .2
     n = math.floor(st); fr = st - n; a = sm(.25, .8, fr)
     def RP(i): return V(RK[0] + (h11(i * 1.7 + 2.) - .5) * .05 + ((i % 2) - .5) * .09, RK[1] + .034, RK[2] + i * .17)
@@ -479,7 +514,7 @@ def sB7(t, d, T):
     return s
 def sB8(t, d, T):
     s = base('mist'); s['sets'] = 4; top = V(40., 22.6, 42.6); s['setB'] = tuple(top) + (1.,); s['rkO'] = tuple(RK) + (99.,)
-    s['fogD'] = .45; s['clY'] = 22.25; s['clA'] = 1.; u = cl(t / d)
+    blend(s, 'above', .6); s['fogD'] = .1; s['mistA'] = .8; s['clCov'] = 1.; s['clY'] = 22.2; s['clA'] = 1.; u = cl(t / d)
     a = 2 * pi * u * .9 + .6
     c = top + V(0, .012, 0)
     s['chars'].append(ch(c, yaw=a + 2.2 + 1.2 * math.sin(T * 1.1), lean=-.1))
@@ -487,13 +522,14 @@ def sB8(t, d, T):
     return s
 def sB9(t, d, T):
     s = base('snow'); u = cl(t / d)
-    for k in ('sunC', 'skT', 'skM', 'skH', 'fogC'): s[k] = s[k] * .42
+    for k in ('sunC', 'skT', 'skM', 'skH', 'fogC'): s[k] = s[k] * .62
+    s['sunC'] = s['sunC'] * 1.6; s['amb'] = 1.1
     eye = PP(33.5, .078); S = W.SUM + V(0, 1.4, 0); dd = N(S - eye)
     yaw = math.atan2(dd[0], dd[2]); pitch = math.asin(dd[1])
     pov(s, eye, yaw, pitch - .04, T, .8, .7, 60.)
-    s['lone'] = tuple(dd) + (1.2 + .4 * math.sin(T * 5.),); s['lsnow'] = 1.; s['fogD'] = .05; s['vig'] = .6; s['eblur'] = .6
+    s['lone'] = tuple(dd) + (1.2 + .4 * math.sin(T * 5.),); s['lsnow'] = .8; s['fogD'] = .035; s['vig'] = .5; s['eblur'] = .5
     pull = sm(.3, .7, t) * (1 - sm(1.1, 1.4, t)) + sm(1.9, 2.3, t)
-    hands(s, y=-.045 + .012 * pull, spread=.06 - .028 * pull, z=.085)
+    hands(s, y=-.036 + .01 * pull, spread=.06 - .026 * pull, z=.09)
     return s
 def sB10(t, d, T):
     s = base('snow'); S = W.SUM; u = cl(t / d)
@@ -535,11 +571,13 @@ def sD1(t, d, T):
     cam(s, P + V(.1, .035, -.32 - .03 * t), V(0, 9. + .3 * t, 36.), 46.); s['focus'] = .4; s['ap'] = .006
     return s
 def sD2(t, d, T):
-    s = base('night'); u = cl(t / d); s['sunC'] = s['sunC'] * 1.5; s['amb'] = 1.3
-    z = mix(16.2, 17.75, ease(u))
-    eye = G(7., z, .08)
-    pitch = mix(.4, -.16, sm(.3, .8, u))
-    pov(s, eye, .12, pitch, T, 1.2, .1, 58.)
+    # third person: cresting the ridge line - and on the far side there is just another foot of another mountain
+    s = base('night'); u = cl(t / d); s['sunC'] = s['sunC'] * 1.5; s['amb'] = 1.4; s['starA'] = 1.3; s['fogD'] = .008
+    z = mix(16.35, 17.0, u); P = G(7., z); k = sm(.3, .9, u)
+    s['chars'].append(ch(P, yaw=0., ph=walk_ph(T) * (1 - sm(.85, 1., u)), lean=.22 * (1 - k)))
+    ro = mix(G(6.82, z - .5, .1), V(6.85, G(7., 17.)[1] + .3, 16.55), k)
+    cam(s, ro, mix(P + V(0, .12, 0), P + V(.3, .3, 6.), k), 44.); s['focus'] = mix(.55, 5., sm(.75, 1., u)); s['ap'] = .012 * (1 - sm(.75, 1., u))
+    s['pl0'] = tuple(ro + V(.2, .15, 0)) + (5.,); s['pl0c'] = (.5, .6, 1., 1.)
     return s
 def sD3(t, d, T):
     s = base('night'); P = G(7., 17.); u = cl(t / d)
@@ -597,8 +635,9 @@ def sD6(t, d, T):
 def sD7(t, d, T):
     s = base('night'); u = cl(t / d); y = W.stY
     s['chars'].append(ch(V(.21, y + 1.065, -.03), yaw=pi, sit=1.))
-    cam(s, mix(V(.8, y + 1.42, 1.5), V(.95, y + 1.7, 2.1), ease(u)), mix(V(.1, y + 1.45, -2.), V(0, y + 2.9, -6.), ease(u)), 40.); s['focus'] = 1.8; s['ap'] = .006
+    cam(s, mix(V(.5, y + 1.2, .62), V(.95, y + 1.7, 2.1), ease(u)), mix(V(.18, y + 1.13, -.4), V(0, y + 2.9, -6.), ease(u)), 40.); s['focus'] = mix(.7, 1.9, ease(u)); s['ap'] = .008
     s['starA'] = 1.4
+    s['pl0'] = tuple(ORB() + V(0, -.02, .12)) + (2.2,); s['pl0c'] = (2.6, 1.6, .7, 1.)
     return s
 def sD8a(t, d, T):
     s = base('night'); u = cl(t / 1.5); h = 2.4 * math.exp(u * 3.9)
@@ -618,11 +657,11 @@ def fly(T):
     return c, f, sd
 def sD9(t, d, T):
     s = base('predawn'); c, f, sd = fly(T); tt = T - 143.0
-    blend(s, 'morning', sm(4.5, 8.2, tt) * .8); s['clA'] = .5; s['clY'] = 2.3
+    blend(s, 'morning', .3 + .7 * sm(1.5, 6., tt)); s['clA'] = .6; s['clY'] = 2.3; s['amb'] = 1.3; s['mistA'] = .25; s['expo'] = 1.1 + .15 * kick(T)
     r = N(np.cross(V(0, 1, 0), f))
     wv = math.sin(tt * 1.9); bank = -.5 * math.cos(tt * 1.9)
     pl = c + f * 1.0 + r * .28 * wv + V(0, -.08 + .05 * math.sin(tt * 3.1), 0)
-    s['items'].append(it(pl, N(f + r * .25 * math.cos(tt * 1.9)), bank, .12, (1, 1, 1), 0))
+    s['items'].append(it(pl, N(f + r * .25 * math.cos(tt * 1.9)), bank, .16, (1, 1, 1), 0))
     cam(s, c, c + f * 3. + V(0, -.25, 0) + r * .1 * wv, 58., .12 * math.sin(tt * .9) + bank * .15); s['focus'] = 1.; s['radial'] = .55
     if tt > 5.4:
         for i in range(6):
@@ -761,8 +800,18 @@ def fade(t):
     return f
 
 # ---------------------------------------------------------------- text
-def tf(name): return skia.Typeface.MakeFromFile(os.path.join(r'C:\Windows\Fonts', name))
-TF_LYR = tf('NotoSerifSC-VF.ttf'); TF_TITLE = tf('STXINGKA.TTF'); TF_KAI = tf('STKAITI.TTF'); TF_EN = tf('NotoSerif-Regular.ttf')
+def tf(name, *alts):
+    # Windows font first; fall back to Linux fonts so previews can be rendered off the main machine
+    for pth in [os.path.join(r'C:\Windows\Fonts', name)] + list(alts):
+        if os.path.exists(pth):
+            t = skia.Typeface.MakeFromFile(pth)
+            if t: return t
+    return skia.Typeface.MakeDefault()
+_LF = '/usr/share/fonts/'
+TF_LYR = tf('NotoSerifSC-VF.ttf', _LF + 'opentype/noto/NotoSerifCJK-Regular.ttc', _LF + 'truetype/wqy/wqy-zenhei.ttc')
+TF_TITLE = tf('STXINGKA.TTF', _LF + 'truetype/arphic/ukai.ttc')
+TF_KAI = tf('STKAITI.TTF', _LF + 'truetype/arphic/ukai.ttc')
+TF_EN = tf('NotoSerif-Regular.ttf', _LF + 'truetype/dejavu/DejaVuSerif.ttf', _LF + 'opentype/noto/NotoSerifCJK-Regular.ttc')
 LYR = []
 for ln in open(os.path.join(HERE, 'lyrics_timed.tsv'), encoding='utf8').read().strip().split('\n')[1:]:
     a_, b_, tx_ = ln.split('\t'); LYR.append([float(a_), float(b_), tx_.strip()])
@@ -807,24 +856,18 @@ def make_atlas():
         ctext(i, ['考试', '考试', 'DDL', '考试', '答辩', '考试', 'DDL', '考试'][k], 70, (200, 40, 35, 255), 150, face=TF_LYR, dx=130)
     return surf.makeImageSnapshot().toarray(colorType=skia.kRGBA_8888_ColorType, alphaType=skia.kPremul_AlphaType)
 
-HERO = {'踩着巨人肩膀把你送到山脚': '山脚', '走了半天都还没走到半腰': '半腰', '如果爬山就是一直在走弯道': '弯道', '有云雾环绕': '云雾', '但就算登上山顶其实也不算高': '不算高',
- '过了旧的关会有新的烦恼': '新的烦恼', '当你跨过下个台阶下个转角': '转角', '会发现一山比一山高': '一山比一山高', '越过后才能看到': '越过',
- '想要登上高山欲穷千里目': '千里目', '回头看看赶了不止千里路': '千里路', '怎么越走越高越云里雾里': '云里雾里', '不如问问自己为何全力以赴': '为何',
- '也许因为甜头刚入口': '甜头', '也许因为野心像是高度酒': '野心', '也许因为人总要往高处走': '高处', '也许最想要的东西不是到处有': '最想要',
- '什么才是成功还不懂': '成功', '人是一个永远不会觉得满足的物种': '满足', '就像那句「只有天空才是极限」': '天空才是极限', '上山的路可能永远没有尽头': '没有尽头',
- '动力来自于山顶上的一切': '山顶', '和被踩在了脚底下那一片': '脚底下', '等到爬的越来越高': '越来越高', '脚底下的步伐越来越飘': '飘', '以为只要站的高一点才能看得远': '看得远',
- '于是都绷起勒紧裤腰': '勒紧', '把山顶当成最终目标': '最终目标', '为了可以拿到完美人生入场券': '入场券', '同时拥有诗和面包': '诗和面包',
- '曾经仰望的尖': '尖', '是你以为伸手就能摸到的天': '天', '结果发现登顶不过只是跨过了边': '边', '重新来到下个山脚翻掉过去的篇': '下个山脚', '不必留恋 曾经堆满筹码的桌上': '不必留恋',
- '但我需要继续前进继续盲人摸象': '继续', '继续高低来回像是海上的波浪': '波浪', '继续用力碰撞': '碰撞', '继续走在我的路上不管外面多么动荡': '我的路', '练出更大颗的心脏可以承受更多的重量': '心脏',
- '我羡慕的故事由我自己来奉上': '自己', '当我站在巨人肩膀上能看到更加辽阔以后': '巨人肩膀', '谁还不是一粒微小尘埃活在这个茫茫宇宙': '尘埃', '奋力冲向山顶上的过程我更钟爱': '过程',
- '那种后来居上弯道超车': '弯道超车', '比起独孤求败更加热血澎湃': '热血澎湃', '现在可以笑着当作花絮看': '花絮', '用来庆祝的香槟带着路上喝': '香槟', '新的游戏继续到了下一关': '下一关'}
+HERO = {'踩着巨人肩膀把你送到山脚': '山脚', '会发现一山比一山高': '一山比一山高', '不如问问自己为何全力以赴': '为何',
+ '就像那句「只有天空才是极限」': '天空才是极限', '脚底下的步伐越来越飘': '飘', '不必留恋 曾经堆满筹码的桌上': '不必留恋',
+ '当我站在巨人肩膀上能看到更加辽阔以后': '巨人肩膀', '谁还不是一粒微小尘埃活在这个茫茫宇宙': '尘埃',
+ '比起独孤求败更加热血澎湃': '热血澎湃', '新的游戏继续到了下一关': '下一关'}
+HERO_SKIP = {0}   # the opening title already says it
 def section(a):
     if a < 33.9 or 80.6 <= a < 112. or a >= 160.: return 'chorus'
     if a < 80.6: return 'verse'
     return 'rap'
 def hero_spec(i):
     a, b, txt, fo = LYR[i]; ph = HERO.get(txt)
-    if not ph: return None
+    if not ph or i in HERO_SKIP: return None
     n = len(ph); vert = section(a) == 'chorus' and ph != '一山比一山高'
     size = {1: 300, 2: 215, 3: 175, 4: 150}.get(n, 118)
     if ph == '尘埃': size = 46
@@ -832,7 +875,7 @@ def hero_spec(i):
     if vert: return dict(ph=ph, vert=True, size=size, w=size * 1.05, h=n * size * 1.02)
     return dict(ph=ph, vert=False, size=size, w=n * size * 1.04, h=size * 1.1)
 def hero_end(i):
-    a, b = LYR[i][0], LYR[i][1]; end = max(b, a + 1.2)
+    a, b = LYR[i][0], LYR[i][1]; end = max(b, a + 1.6)
     for j in range(i + 1, len(LYR)):
         if HERO.get(LYR[j][2]): return min(end, LYR[j][0] - .12)
     return end
@@ -985,15 +1028,16 @@ def build_layout():
     json.dump(lay, open(_lp, 'w'))
 
 # ---------------------------------------------------------------- renderer
-F1 = ['fogD', 'fogH', 'starA', 'domeA', 'clY', 'clA', 'rainA', 'snowA', 'wet', 'snowL', 'mistA', 'amb', 'orb', 'winA', 'strm', 'ntBlur', 'tmaxS']
+F1 = ['fogD', 'fogH', 'starA', 'domeA', 'clY', 'clA', 'rainA', 'snowA', 'wet', 'snowL', 'mistA', 'amb', 'orb', 'winA', 'strm', 'ntBlur', 'tmaxS', 'clCov']
 F3 = ['sunD', 'sunC', 'skT', 'skM', 'skH', 'fogC', 'stO']
 F4 = ['ltn', 'glow', 'lone', 'pl0', 'pl0c', 'sp0', 'sp0d', 'sp0c', 'setA', 'setB', 'rkO', 'part', 'partC']
-STRIP_SEQ = ['A3', 'B7', 'C3', 'C6']
-STRIP_T = [1.2, 1.0, 1.0, 2.0]
+STRIP_SEQ = ['A4', 'B3', 'B7', 'C7']
+STRIP_T = [.6, 1.0, 1.0, .9]
 class Renderer:
     def __init__(s, W_, H, ss, text=True):
         s.W, s.H, s.ss = W_, H, ss
-        s.ctx = moderngl.create_standalone_context()
+        try: s.ctx = moderngl.create_standalone_context()
+        except Exception: s.ctx = moderngl.create_standalone_context(backend='egl')
         vb = s.ctx.buffer(np.array([-1, -1, 3, -1, -1, 3], 'f4').tobytes()); s.vb = vb
         init_world(s.ctx, vb)
         rd = lambda n: open(os.path.join(HERE, n), encoding='utf8').read()
@@ -1080,7 +1124,8 @@ class Renderer:
         U(p, 'lod0', float(np.log2(s.ss))); U(p, 'trK', int(trk)); U(p, 'trX', float(trx))
         U(p, 'dofA', dof(A)); U(p, 'dofB', dof(B))
         U(p, 'pov', (g('drops'), g('lsnow'), g('desat'), g('eblur')))
-        U(p, 'fx', (g('pulse'), g('radial'), g('film'), g('vig')))
+        punch = kick(T) * (.0045 if 112.5 <= T < 158.5 else .0025)
+        U(p, 'fx', (g('pulse') + punch, g('radial'), g('film'), g('vig')))
         U(p, 'grade', (g('expo'), g('sat'), g('warm'), g('lift')))
         s.v2.render(moderngl.TRIANGLES)
         return s.f2.read(components=3, alignment=1)
@@ -1098,12 +1143,12 @@ if __name__ == '__main__':
     if mode == 'layout': build_layout()
     elif mode == 'sheet':
         ts = parse_times(sys.argv[3:])
-        W_, H = 960, 540; r = Renderer(W_, H, 1.0); cols = 5 if os.environ.get('C5') else 3; rows = (len(ts) + cols - 1) // cols
+        W_, H = (480, 270) if os.environ.get('SMALL') else (960, 540); r = Renderer(W_, H, 1.0); cols = 5 if os.environ.get('C5') else 3; rows = (len(ts) + cols - 1) // cols
         im = Image.new('RGB', (W_ * cols, H * rows))
         import time
         for i, t in enumerate(ts):
             t0 = time.time()
-            im.paste(Image.frombytes('RGB', (W_, H), r.frame(t)), ((i % cols) * W_, (i // cols) * H))
+            im.paste(Image.frombytes('RGB', (W_, H), r.frame(t)), ((i % cols) * W_, (i // cols) * H)); im.save(sys.argv[2], quality=88)
             print(f'{t:.2f} {time.time() - t0:.2f}s', flush=True)
         im.resize((1920, 360 * rows) if cols == 3 else (1920, 216 * rows), Image.LANCZOS).save(sys.argv[2], quality=88)
     elif mode == 'still':
