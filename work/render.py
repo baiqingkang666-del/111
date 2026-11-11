@@ -429,7 +429,7 @@ def sB2b(t, d, T):
         s['items'].append(it(p, N(-ww + vv * .1 * (1 - a)), .5 * (1 - a), .04, (1, 1, 1), 0))
     else:
         b = sm(.75, 1.1, t)
-        s['notes'].append(note(C2W(s, (0., -.012 + .004 * b, .1)), N(-ww + vv * .35), vv, .046, .023, front=0, bend=.18 * (1 - b * .6)))
+        s['notes'].append(note(C2W(s, (0., -.012 + .004 * b, .1)), N(-ww + vv * .35), vv, .046, .023, front=0, bend=.03 * (1 - b)))
         s['ntBlur'] = 2.3
     cup = .012 * sm(.5, .9, t)
     hands(s, y=-.034 + cup, spread=.047, z=.095)
@@ -556,12 +556,14 @@ def sC7(t, d, T):
     s = base('rain'); x0 = -1.3; zs = shoreZ(x0)
     P = G(x0, zs + .13)
     reach = sm(.7, 1.1, t)
-    s['chars'].append(ch(P, yaw=pi + .2, sit=1., med=1., lean=.25 * reach, arm=-reach))
+    s['chars'].append(ch(P, yaw=pi + .45, sit=1., med=1., lean=.25 * reach, arm=-reach, eye=1 if t < 1.25 else 0))
     pw = V(x0 + .03, .006 + .003 * math.sin(T * 3.), zs - .09)
     lift = sm(1.1, 1.7, t)
     pp = mix(pw, P + V(.0, .085, -.07), lift)
     s['items'].append(it(pp, N((.6, .05 + .5 * lift, -1.)), .1 * math.sin(T * 2.) * (1 - lift), .06, (.62, .66, .74), 0))
-    cam(s, P + V(.5, .1, -.62), P + V(0, .045, -.06), 40.); s['focus'] = .8; s['ap'] = .02
+    ro = P + mix(V(.36, .12, -.46), V(.3, .1, -.38), sm(0., 1.9, t))
+    cam(s, ro, P + V(.02, .05, -.07), 40.); s['focus'] = float(np.linalg.norm(ro - P)); s['ap'] = .014
+    s['pl0'] = tuple(ro + V(-.2, .25, .1)) + (5.,); s['pl0c'] = (.5, .62, 1., 1.)
     lightning(s, T, [110.9], 13.)
     return s
 
@@ -583,7 +585,7 @@ def sD2(t, d, T):
 def sD3(t, d, T):
     s = base('night'); P = G(7., 17.); u = cl(t / d)
     off = sm(.9, 1.5, t)
-    c = ch(P, yaw=pi + .35, med=1. - off if off < 1 else 0., arm=sm(1.3, 1.9, t), lean=-.25 * sm(1.3, 2.2, t), eye=0)
+    c = ch(P, yaw=pi + .35, med=1. - off if off < 1 else 0., arm=sm(1.3, 1.9, t), lean=-.25 * sm(1.3, 2.2, t), eye=1 if t < .9 else (2 if t > 1.9 else 0))
     s['chars'].append(c)
     ro = P + V(.3, .08, -.62); dd = ro - P; c['yaw'] = math.atan2(dd[0], dd[2])
     s['pl0'] = tuple(ro + V(.1, .12, 0)) + (4.,); s['pl0c'] = (1.3, .95, .6, 1.)
@@ -603,12 +605,13 @@ def sD4(t, d, T):
 def sD5a(t, d, T):
     s = base('night'); P = PP(19.2); s['domeA'] = .8; s['rainA'] = .35; s['wet'] = .6
     k = sm(.9, 1.3, t)
-    c = ch(P, yaw=pi + .3, arm=-1., lean=.1); s['chars'].append(c)
+    c = ch(P, yaw=pi + .3, arm=-1., lean=.1, eye=2 if t > 1.3 else 0); s['chars'].append(c)
     f = dirYP(c['yaw'], 0.)
     hp = P + f * .062 + V(0, .055, 0)
     if k < .5: s['notes'].append(note(hp, N(V(0, 1, 0) + f * .5), f, .05, .028, front=0, bend=.25 * (1 - sm(0, .8, t))))
     else: s['items'].append(it(hp + V(0, .01, 0), N(f + V(0, .3, 0)), 0., .06, (.9, .92, .96), 0))
-    cam(s, P + f * .5 + V(.12, .1, 0), P + V(0, .055, 0), 40.); s['focus'] = .5; s['ap'] = .02
+    cam(s, P + f * .4 + V(.1, .09, 0), P + V(0, .06, 0), 40.); s['focus'] = .41; s['ap'] = .02
+    s['pl0'] = tuple(P + f * .4 + V(-.15, .25, 0)) + (5.,); s['pl0c'] = (.6, .68, 1., 1.)
     s['part'] = proj(s, hp) + (sm(1.0, 1.2, t) * (1 - sm(1.3, 1.9, t)) * .7, 3)
     return s
 def sD5b(t, d, T):
@@ -704,7 +707,8 @@ def sE1b(t, d, T):
     turn = sm(.2, .9, t)
     c = ch(P, yaw=mix(yawP(z), pi + .25, turn), hat=1, eye=2 if t > .8 else 0, arm=.9 * sm(1., 1.5, t) * (.7 + .3 * math.sin(T * 9.)))
     s['chars'].append(c)
-    cam(s, PP(z - .78, .09) + V(.22, 0, 0), P + V(0, .12 + .03 * t, 0), 40.); s['focus'] = .8; s['ap'] = .014
+    k = sm(0., 2.2, t); ro = G(P[0] + .2 - .05 * k, P[2] - .5 + .14 * k, .08)
+    cam(s, ro, P + V(0, .09, 0), 40.); s['focus'] = float(np.linalg.norm(ro - P)); s['ap'] = .016
     return s
 def sE5(t, d, T):
     s = base('sunset'); x = 10.5 + .22 * t; zz = 14.6
@@ -769,8 +773,8 @@ SH = [
  (65.48, 'B7', sB7, 'cut', .2), (69.04, 'B8', sB8, 'dis', .5), (72.94, 'B9', sB9, 'cut', .2), (76.8, 'B10', sB10, 'dis', .5),
  (80.68, 'C1', mk(sGate, 1), 'storm', 1.0), (88.5, 'C2', mk(sZig, 1), 'dis', .6), (91.88, 'C3', mk(sFog, 1), 'cut', .3), (96.14, 'C4', mk(sPeak, 1), 'cut', .2),
  (99.52, 'C5', sDeskC, 'dis', .5), (103.46, 'C6', mk(sStairs, 1), 'dis', .5), (110.2, 'C7', sC7, 'dis', .5),
- (112.5, 'D1', sD1, 'flip', .7), (115.86, 'D2', sD2, 'cut', .2), (119.6, 'D3', sD3, 'page', .7), (124.0, 'D4', sD4, 'dis', .4),
- (128.78, 'D5a', sD5a, 'cut', .2), (130.9, 'D5b', sD5b, 'dis', .4), (133.52, 'D6', sD6, 'cut', 0), (136.4, 'D7', sD7, 'dis', .5),
+ (112.5, 'D1', sD1, 'flip', .7), (115.86, 'D2', sD2, 'cut', .2), (119.6, 'D3', sD3, 'page', .7), (124.0, 'D4', sD4, 'whip', .4),
+ (128.78, 'D5a', sD5a, 'whip', .35), (130.9, 'D5b', sD5b, 'dis', .4), (133.52, 'D6', sD6, 'cut', 0), (136.4, 'D7', sD7, 'whip', .4),
  (140.18, 'D8a', sD8a, 'dis', .4), (141.5, 'D8b', sD8b, 'dis', .6), (143.0, 'D9', sD9, 'white', .5), (150.58, 'D11', sD11, 'dis', .4),
  (154.56, 'D12', sD12, 'white', .5),
  (160.2, 'E1', mk(sGate, 2), 'cut', 0), (164.9, 'E1b', sE1b, 'dis', .5), (167.28, 'E2', mk(sZig, 2), 'dis', .6), (171.16, 'E3', mk(sFog, 2), 'dis', .6),
@@ -778,7 +782,7 @@ SH = [
  (188.9, 'E7b', sE7b, 'dis', .4), (191.3, 'Z1', sZ1, 'dis', .6),
 ]
 SHN = {s[1]: s for s in SH}
-TRK = dict(dis=1, white=2, storm=3, flip=4, page=5)
+TRK = dict(dis=1, white=2, storm=3, flip=4, page=5, whip=6)
 def shot_dur(i): return (SH[i + 1][0] if i + 1 < len(SH) else DUR) - SH[i][0]
 def shot_state(T):
     idx = 0

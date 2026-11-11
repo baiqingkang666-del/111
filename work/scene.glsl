@@ -84,7 +84,9 @@ void mapCampus(vec3 p){
   U(lim,0);return;}
  float hg=.16+.34*h*h;
  vec3 q=vec3(f.x,p.y-.05-hg*.5,f.y);
- float d=sdRB(q,vec3(.2+.11*h2,hg*.5+.06,.15+.12*fract(h2*7.)),.012);
+ float bw=.2+.11*h2,bz=.15+.12*fract(h2*7.);
+ float d=sdRB(q,vec3(bw,hg*.5+.06,bz),.012);
+ if(h<.62){float ry=q.y-hg*.5-.06;d=min(d,max(max((abs(q.x)-bw-.03)*.55+ry,-ry-.005),abs(q.z)-bz-.03)*.85);}
  if(d<gd){gd=d;gm=7;gl=vec3(h,h2,0.);}
  U(lim,0);}
 
@@ -236,11 +238,12 @@ float terSh(vec3 q){float sh=1.,st=.06;
  for(int i=0;i<16;i++){vec3 s=q+sunD*st;float dh=s.y-terH(s.xz,4);sh=min(sh,9.*dh/st);if(sh<.02)break;st+=max(dh*.7,.07);if(st>10.)break;}
  return clamp(sh,0.,1.);}
 
+bool noOcc=false;
 vec3 lit(vec3 q,vec3 n,vec3 rd,vec3 alb,float spec,float tt){
  float sh=1.,ao=1.;
  if(stage==0&&dot(n,sunD)>0.)sh=terSh(q+n*.012);
  float sdn=map(q+n*.03);
- if(sdn<1.2){if(sh>.02&&dot(n,sunD)>0.)sh=min(sh,sdfSh(q+n*.004,sunD,1.6));ao=sdfAO(q,n);}
+ if(sdn<1.2&&!noOcc){if(sh>.02&&dot(n,sunD)>0.)sh=min(sh,sdfSh(q+n*.004,sunD,1.6));ao=sdfAO(q,n);}
  float dif=max(dot(n,sunD),0.);
  vec3 c=alb*(sunC*dif*sh*1.5+mix(skM,skT,.4)*(.5+.5*n.y)*amb*ao+skH*.14*max(dot(n,-sunD*vec3(1.,0.,1.)),0.)*ao);
  vec3 rf=reflect(rd,n);
@@ -336,7 +339,7 @@ vec3 shadeObj(vec3 q,vec3 rd,float tt,int m,int id,vec3 l){
   alb=mix(alb,vec3(.42,.47,.4),.25*smoothstep(.55,.75,fbm(q.xz*14.+q.y*5.)));spec=.2;}
  else if(m==6){float nv=max(dot(n,-rd),0.);alb=vec3(1.,.75,.3);emi=mix(vec3(1.,.36,.08),vec3(1.,.8,.42),pow(nv,1.4))*orb*(.3+.55*nv)*(.85+.3*fbm(n.xy*5.+n.z*3.+T*.1));spec=.6;}
  else if(m==7){vec3 w=mix(vec3(.82,.78,.72),vec3(.7,.5,.42),step(.5,l.y));w=mix(w,vec3(.72,.76,.8),step(.75,l.x));
-  if(n.y>.5)alb=mix(vec3(.46,.22,.16),vec3(.3,.31,.34),step(.4,l.x))*(.8+.4*step(.5,fract(q.x*9.+q.z*9.)));
+  if(n.y>.45)alb=mix(vec3(.5,.2,.13),vec3(.3,.31,.34),step(.62,l.x))*(.82+.3*step(.5,fract(q.z*40.)));
   else{float u=(abs(n.x)>.5?q.z:q.x)*13.,v=q.y*13.;float wn=step(.3,fract(u))*step(.35,fract(v))*step(.13,q.y);
    float on=step(.62,h21(floor(vec2(u,v))+l.xy*31.));
    alb=mix(w,vec3(.12,.16,.22),wn);emi=vec3(1.,.72,.38)*winA*wn*on*1.6;spec=wn*.4;}}
@@ -349,7 +352,7 @@ vec3 shadeObj(vec3 q,vec3 rd,float tt,int m,int id,vec3 l){
  else if(m==10){vec4 S=ntS[id];float side=l.z>0.?S.x:S.y;vec2 uv=vec2(l.x*.5+.5,l.y*.5+.5);if(l.z<=0.)uv.x=1.-uv.x;
   vec3 pc=vec3(.93,.91,.86);
   if(side<-.5)alb=pc;else{alb=atlas(side,uv,ntBlur);if(uv.x>S.z)alb=pc;}
-  alb*=.94+.1*fbm(uv*30.);emi=alb*sunC*.12*pow(max(dot(rd,sunD),0.),2.);}
+  alb*=.94+.1*fbm(uv*30.);emi=alb*sunC*.12*pow(max(dot(rd,sunD),0.),2.);noOcc=true;}
  else if(m==11){float g=fbm(vec2(q.x*2.,q.z*40.));alb=mix(vec3(.32,.19,.1),vec3(.5,.32,.17),g)*(.85+.3*fbm(q.xz*9.));spec=.25;}
  else if(m==12){float fi=float(id);vec3 cv2=.5+.45*cos(6.2832*(h11(fi*1.3+.4)+vec3(0.,.33,.67)));cv2=mix(cv2,vec3(.6,.25,.2),.35);
   float hsx=.52-.047*fi,hsz=.36-.03*fi;

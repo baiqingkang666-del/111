@@ -1,4 +1,4 @@
-# 给 Codex 的执行清单（第 2 轮：v3 修正 + 成片）
+# 给 Codex 的执行清单（第 4 轮：一次性渲染 v3 成片）
 
 只执行，不要修改任何代码或着色器。任何一步报错，就停下来，把完整报错原文写进 `work/prev/v3_error.txt` 并提交推送。
 `git push` 如果因为网络失败（例如 Could not resolve host），等几秒重试，最多 4 次，不算报错。
@@ -19,13 +19,13 @@
    ```
 3. 渲染本轮改过的镜头的接触表
    ```
-   python render.py sheet prev/v3_r2.jpg A6 B6b C3 C4 C7 D4 E7b
+   python render.py sheet prev/v3_r4.jpg A6 B2b B6b C3 C4 C7 D3 D4 D5a E1b E6 E7b
    ```
 4. 提交并推送接触表和布局文件
    ```
    cd ..
-   git add work/prev/v3_r2.jpg work/layout.json
-   git commit -m "v3 round 2 preview sheet (GPU)"
+   git add work/prev/v3_r4.jpg work/layout.json
+   git commit -m "v3 round 4 preview sheet (GPU)"
    git push origin claude/mv-v3
    cd work
    ```

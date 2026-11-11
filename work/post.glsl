@@ -44,6 +44,10 @@ vec3 scn(vec2 u,float extra){
   if(xx<x0+w){float k=(xx-x0)/w;vec3 bk=vec3(.82,.78,.7)*(.55+.45*sin(k*3.1416));
    vec3 src=dofS(S,vec2(2.*x0-u.x+w*k,u.y),dofA,.02);return mix(bk,src,.18);}
   b=dofS(S2,u,dofB,extra);return b*(1.-.5*exp(-(xx-x0-w)*9.));}
+ if(trK==6){float k=trX<.5?trX*2.:(1.-trX)*2.;float sh=k*k*.55;vec3 c=vec3(0.);
+  for(int i=0;i<6;i++){float o=(float(i)/5.-.5)*sh*.6;vec2 v=vec2(fract(u.x+(trX<.5?sh:-sh)+o),u.y);
+   c+=trX<.5?dofS(S,v,dofA,extra):dofS(S2,v,dofB,extra);}
+  return c/6.;}
  return dofS(S,u,dofA,extra);}
 void main(){
  vec2 uv=gl_FragCoord.xy/R;
@@ -103,4 +107,5 @@ void main(){
  c*=step(bar,gl_FragCoord.y)*step(gl_FragCoord.y,R.y-bar);
  vec4 tx=texture(TX,uv);
  c=c*(1.-tx.a)+tx.rgb;
+ c+=(h21(gl_FragCoord.xy*1.37+fract(T)*53.)-.5)/255.;
  O=vec4(clamp(c,0.,1.),1.);}
