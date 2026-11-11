@@ -95,7 +95,7 @@ float flightD(vec3 q){
  float d=max(d2,max(abs(q.x)-.3,max(-s-.3,s-2.7)));
  d=max(d,(clamp((s-.3)/1.8,0.,1.)*.96-.4)-q.y);
  float sl=clamp((s-.3)/1.8,0.,1.)*.96;
- float wl=max(max(abs(abs(q.x)-.335)-.035,q.y-sl-.15),max(sl-.4-q.y,max(-s-.3,s-2.7)));
+ float wl=max(max(abs(abs(q.x)-.335)-.035,q.y-sl-.085),max(sl-.4-q.y,max(-s-.3,s-2.7)));
  return min(d,wl);}
 void mapStairs(vec3 p){
  vec3 l=vec3(p.z-stO.z,p.y-stO.y,p.x-stO.x);
@@ -337,7 +337,7 @@ vec3 shadeObj(vec3 q,vec3 rd,float tt,int m,int id,vec3 l){
  else if(m==6){float nv=max(dot(n,-rd),0.);alb=vec3(1.,.75,.3);emi=mix(vec3(1.,.36,.08),vec3(1.,.8,.42),pow(nv,1.4))*orb*(.3+.55*nv)*(.85+.3*fbm(n.xy*5.+n.z*3.+T*.1));spec=.6;}
  else if(m==7){vec3 w=mix(vec3(.82,.78,.72),vec3(.7,.5,.42),step(.5,l.y));w=mix(w,vec3(.72,.76,.8),step(.75,l.x));
   if(n.y>.5)alb=mix(vec3(.46,.22,.16),vec3(.3,.31,.34),step(.4,l.x))*(.8+.4*step(.5,fract(q.x*9.+q.z*9.)));
-  else{float u=(abs(n.x)>.5?q.z:q.x)*26.,v=q.y*24.;float wn=step(.3,fract(u))*step(.35,fract(v))*step(.13,q.y);
+  else{float u=(abs(n.x)>.5?q.z:q.x)*13.,v=q.y*13.;float wn=step(.3,fract(u))*step(.35,fract(v))*step(.13,q.y);
    float on=step(.62,h21(floor(vec2(u,v))+l.xy*31.));
    alb=mix(w,vec3(.12,.16,.22),wn);emi=vec3(1.,.72,.38)*winA*wn*on*1.6;spec=wn*.4;}}
  else if(m==8){alb=mix(vec3(.12,.3,.1),vec3(.3,.42,.14),l.x)*(.8+.5*fbm(q.xz*40.));}

@@ -278,7 +278,7 @@ def sFog(t, d, T, v):
         hands(s, lift=(.002 * sw, -.002 * sw))
         s['items'].append(it(C2W(s, (0., -.022 + .0015 * sw, .1)), N(ww + vv * .42 + uu * .12), .06 * sw, .05, (1, 1, 1), 0))
     elif v == 1:    # the plane is gone: empty hands pumping through the rain
-        hands(s, y=-.034, spread=.05, lift=(.007 * sw, -.007 * sw), fwd=(.012 * sw, -.012 * sw))
+        hands(s, y=-.029, spread=.046, lift=(.004 * sw, -.004 * sw), fwd=(.008 * sw, -.008 * sw))
     else:           # refolded plane, carried easily in one hand
         hands(s, y=-.033, spread=.05, lift=(-.004, .008), fwd=(0., .006))
         s['items'].append(it(C2W(s, (.047, -.014, .103)), N(ww + vv * .35 - uu * .25), -.25, .042, (1., .97, .9), 0))
@@ -301,13 +301,14 @@ def sPeak(t, d, T, v):
         cam(s, ro, ta, 40.); s['focus'] = np.linalg.norm(ro - top); s['ap'] = .012 * (1 - k)
     else:           # no cheering: from below, the real mountain looms over the little peak in the lightning
         ro = G(top[0] - .22, top[2] - .62 + .1 * u, .035); cam(s, ro, top + V(.15, .22 + .12 * u, .6), 46.)
-        s['focus'] = .66; s['ap'] = .006; s['amb'] = 2.6
+        s['focus'] = .66; s['ap'] = .006; s['amb'] = 3.2; s['skH'] = V(.13, .19, .34); s['skM'] = V(.06, .09, .17); s['fogD'] = .014
+        s['pl0'] = tuple(top + V(-.25, .3, -.35)) + (6.,); s['pl0c'] = (.55, .68, 1.1, 1.)
     if v == 0:
         s['chars'].append(ch(top + V(0, .03 * abs(math.sin(pi * x)), 0), yaw=pi - .5, arm=1., ph=0.))
         s['items'].append(backplane(s['chars'][0]))
     else:
         s['chars'].append(ch(top, yaw=pi - .5, lean=.22, med=1.))
-        lightning(s, T, [97.7, 98.15], 11.); s['ltn'] = (s['ltn'][0] * 1.3, s['ltn'][1], -.4, 0)
+        lightning(s, T, [96.5, 97.7, 98.15, 99.0], 11.); s['ltn'] = (s['ltn'][0] * 1.3, s['ltn'][1], -.4, 0)
     return s
 
 def sDeskA(t, d, T):
@@ -365,7 +366,7 @@ def sStairs(t, d, T, v):
         p, yaw, idx = stair(sv); p = p + V(0, stair_dy(sv), 0)
         s['chars'].append(ch(p, yaw=yaw, ph=walk_ph(T), lean=.18, sc=.11)); s['items'].append(backplane(s['chars'][0]))
         k = sm(.5, .95, u)
-        ro = p + mix(V(-.62, .34, -.5), V(-1.5, 1.25, -1.9), k)
+        ro = p + mix(V(-.6, .44, -.48), V(-1.5, 1.25, -1.9), k)
         ta = mix(p + V(.12, .1, .12), V(1., 9.5, 38.), k * .8)
         cam(s, ro, ta, mix(40., 34., k)); s['focus'] = mix(.8, 30., k); s['ap'] = .012 * (1 - k)
         s['fogD'] = .02; s['fogH'] = .2; s['clCov'] = .5
@@ -490,12 +491,12 @@ def FEET(): return G(7., 17.)
 def sB6b(t, d, T):
     s = base('noon'); P = FEET(); s['snowL'] = -2.; s['snowA'] = .25; s['fogD'] = .06; s['fogH'] = .001; s['fogC'] = V(.85, .88, .93); s['clA'] = 0.
     k = sm(-.1, .7, t)
-    cam(s, P + V(.05, .34, -.52), mix(P + V(0, .5, 2.), P + V(0, -.03, -.1), k), 44.); s['focus'] = .6; s['ap'] = .015
+    cam(s, P + V(.04, .46, -.56), mix(P + V(0, .5, 2.), P + V(0, .0, -.1), k), 44.); s['focus'] = .68; s['ap'] = .008
     s['chars'].append(ch(P, yaw=pi, lean=.15))
-    s['items'].append(it(G(P[0] - .14, P[2] - .13, .014), N((.08, 1, .05)), .9, .11, (1, 1, 1), 5))
-    s['items'].append(it(G(P[0] + .15, P[2] - .1, .03), (0, 0, 1), 0., .07, (1, 1, 1), 6))
-    s['items'].append(it(G(P[0] + .02, P[2] - .2, .008), N((.05, 1, .12)), .35, .05, (1, 1, 1), 7))
-    s['pl0'] = tuple(G(P[0] + .02, P[2] - .2, .05)) + (300.,); s['pl0c'] = (.5, .9, .6, 1.)
+    s['items'].append(it(G(P[0] - .13, P[2] - .09, .014), N((.08, 1, .05)), .9, .11, (1, 1, 1), 5))
+    s['items'].append(it(G(P[0] + .13, P[2] - .07, .03), (0, 0, 1), 0., .07, (1, 1, 1), 6))
+    s['items'].append(it(G(P[0] + .01, P[2] - .17, .008), N((.05, 1, .12)), .35, .05, (1, 1, 1), 7))
+    s['pl0'] = tuple(G(P[0] + .01, P[2] - .17, .05)) + (300.,); s['pl0c'] = (.5, .9, .6, 1.)
     return s
 RK = V(40., 22., 40.)
 def sB7(t, d, T):
@@ -860,7 +861,8 @@ HERO = {'踩着巨人肩膀把你送到山脚': '山脚', '会发现一山比一
  '就像那句「只有天空才是极限」': '天空才是极限', '脚底下的步伐越来越飘': '飘', '不必留恋 曾经堆满筹码的桌上': '不必留恋',
  '当我站在巨人肩膀上能看到更加辽阔以后': '巨人肩膀', '谁还不是一粒微小尘埃活在这个茫茫宇宙': '尘埃',
  '比起独孤求败更加热血澎湃': '热血澎湃', '新的游戏继续到了下一关': '下一关'}
-HERO_SKIP = {0}   # the opening title already says it
+HERO_SKIP = {0}   # the opening title already says it (the last '一山比一山高' is added below: it would cover the note)
+HERO_SKIP.add(max(i for i, l in enumerate(LYR) if l[2] == '会发现一山比一山高'))
 def section(a):
     if a < 33.9 or 80.6 <= a < 112. or a >= 160.: return 'chorus'
     if a < 80.6: return 'verse'
